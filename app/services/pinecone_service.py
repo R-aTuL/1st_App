@@ -15,20 +15,21 @@ pc = Pinecone(
 EMBEDDING_DIMENSION = 1536
 
 def embed_chunks_to_pinecone(chunks, index_name):
-    if index_name in pinecone.list_indexes():
-        pinecone.delete_index(name = index_name)
+    if index_name in pc.list_indexes().names():
+        pc.delete_index(name = index_name)
     
-    pinecone.create_index(name = index_name, dimension = EMBEDDING_DIMENSION,metric = 'cosine')
-    index = pinecone.Index(name = index_name)
+    pc.create_index(name = index_name, dimension = EMBEDDING_DIMENSION,metric = 'cosine')
+    index = pc.Index(name = index_name)
     embeddings_with_ids = []
     for i,chunk in enumerate(chunks):
-        embeddings_with_ids.append((str(i),get_embedding(chunk),chunk))
+        embedding = get_embedding(chunk)
+        embeddings_with_ids.append((str(i),embedding,chunk))
     upserts = [(id,vec,{"chunk_text":text}) for id,vec,text in embeddings_with_ids]
     index.upsert(vectors = upserts)
 
 def get_similar_context_chunks(query, index_name):
     question_embedding = get_embedding(query)
-    index = pinecone.Index(name = index_name)
+    index = pc.Index(name = index_name)
     query_results = index.query(question_embedding, top_k = 3,include_metadata = True)
     context_chunks = [x['metadata']['chunk_text'] for x in query_results['matches']]
     return context_chunks

@@ -2,12 +2,12 @@
 
 PROMPT_LIMIT = 3750
 
-def chunk_text(text, chunk_size = 300):
+def chunk_text(text, chunk_size = 200):
     sentences = text.split('. ')
     chunks = []
     curr_chunk = ""
     for sentence in sentences:
-        if len(curr_chunk) + len(sentence) < chunk_size:
+        if len(curr_chunk) + len(sentence) <= chunk_size:
             curr_chunk += sentence + '. '
         else:
             chunks.append(curr_chunk)

@@ -3,9 +3,9 @@ from flask import request, jsonify
 from app.services import openai_service, pinecone_service, scraping_service
 from app.utils.helper_functions import chunk_text, build_prompt
 
-PINECONE_INDEX_NAME = "vec-embeddings01"
+PINECONE_INDEX_NAME = "index237"
 
-@api_blueprint.route('/handle_query',methods=['POST'])
+@api_blueprint.route('/handle-query',methods=['POST'])
 def handle_query():
     question = request.json.get('question')
     context_chunks = pinecone_service.get_similar_context_chunks(question, PINECONE_INDEX_NAME)
@@ -16,12 +16,14 @@ def handle_query():
     return jsonify({"question": question, "answer": answer})
 
 
-@api_blueprint.route('/embed_store',methods=['POST'])
+@api_blueprint.route('/embed-store',methods=['POST'])
 def embed_store():
     print("test_1")
-    url = request.json('http://127.0.0.1:5000/embed_store')
+    print(request.json)
+    data = request.json
+    url = data['url']
     print("test_2")
-    url_text = scraping_service.scrape_webpage('https://dev.to/bobur/how-to-build-a-custom-gpt-enabled-full-stack-app-for-real-time-data-38k8')
+    url_text = scraping_service.scrape_webpage(url)
     chunks = chunk_text(url_text)
     pinecone_service.embed_chunks_to_pinecone(chunks,PINECONE_INDEX_NAME)
     response_json = {
