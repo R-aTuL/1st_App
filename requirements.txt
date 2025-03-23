@@ -1,0 +1,7 @@
+flask
+requests
+bs4
+ollama
+pinecone-client
+flask-cors
+python-dotenv

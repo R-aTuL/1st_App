@@ -1,5 +1,5 @@
 import pinecone
-from app.services.openai_service import get_embedding
+from app.services.ollama_service import get_embedding
 import os
 from pinecone import Pinecone, ServerlessSpec
 
@@ -12,13 +12,13 @@ pc = Pinecone(
         api_key=os.environ.get("PINECONE_API_KEY")
     )
 
-EMBEDDING_DIMENSION = 1536
+EMBEDDING_DIMENSION = 384
 
 def embed_chunks_to_pinecone(chunks, index_name):
     if index_name in pc.list_indexes().names():
         pc.delete_index(name = index_name)
     
-    pc.create_index(name = index_name, dimension = EMBEDDING_DIMENSION,metric = 'cosine')
+    pc.create_index(name = index_name, dimension = EMBEDDING_DIMENSION,metric = 'cosine',spec=ServerlessSpec(cloud="aws",region="us-east-1"))
     index = pc.Index(name = index_name)
     embeddings_with_ids = []
     for i,chunk in enumerate(chunks):
@@ -30,7 +30,7 @@ def embed_chunks_to_pinecone(chunks, index_name):
 def get_similar_context_chunks(query, index_name):
     question_embedding = get_embedding(query)
     index = pc.Index(name = index_name)
-    query_results = index.query(question_embedding, top_k = 3,include_metadata = True)
+    query_results = index.query(vector=question_embedding, top_k=3, include_metadata=True)
     context_chunks = [x['metadata']['chunk_text'] for x in query_results['matches']]
     return context_chunks
 

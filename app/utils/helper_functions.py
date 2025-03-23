@@ -1,41 +1,50 @@
 
+PROMPT_LIMIT = 3750  # Ollama has no strict limit, but keeping it to avoid excessive context length
 
-PROMPT_LIMIT = 3750
-
-def chunk_text(text, chunk_size = 200):
+def chunk_text(text, chunk_size=200):
     sentences = text.split('. ')
     chunks = []
     curr_chunk = ""
+    
     for sentence in sentences:
         if len(curr_chunk) + len(sentence) <= chunk_size:
             curr_chunk += sentence + '. '
         else:
-            chunks.append(curr_chunk)
+            chunks.append(curr_chunk.strip())
             curr_chunk = sentence + '. '
+
     if curr_chunk:
-        chunks.append(curr_chunk)
+        chunks.append(curr_chunk.strip())
+
     return chunks
 
-def build_prompt(query,context_chunks):
+def build_prompt(query, context_chunks):
+    """
+    Constructs a prompt formatted for Ollama LLM.
+    """
     prompt_start = (
-        "Answer the question based on the context below. If you don't know the answer based on the context provided below, just respond with 'I don't know' instead of making up an answer. Return just the answer to the question, don't add anything else. Don't start your response with the word 'Answer:'. Make sure your response is in markdown format\n\n"+
-        "Context:\n")
-    prompt_end = (
-        f"\n\nQuestion: {query}\nAnswer:")
+        "Use the following context to answer the question. "
+        "If the answer is not present in the context, reply with 'I don't know'. "
+        "Return only the answer, without adding unnecessary explanations.\n\n"
+        "### Context:\n"
+    )
+    
+    prompt_end = f"\n\n### Question: {query}\n### Answer:"
 
-    prompt = ""
-    for i in range(1, len(context_chunks)):
-        if len("\n\n---\n\n".join(context_chunks[:i])) >= PROMPT_LIMIT:
-            prompt = (
-                prompt_start +
-                "\n\n---\n\n".join(context_chunks[:i-1]) +
-                prompt_end
-            )
+    # Limit the number of context chunks if necessary
+    selected_chunks = []
+    total_length = 0
+
+    for chunk in context_chunks:
+        chunk_length = len(chunk)
+        if total_length + chunk_length >= PROMPT_LIMIT:
             break
-        elif i == len(context_chunks)-1:
-            prompt = (
-                prompt_start +
-                "\n\n---\n\n".join(context_chunks) +
-                prompt_end
-            )
-    return prompt
+        selected_chunks.append(chunk)
+        total_length += chunk_length
+
+    context_text = "\n\n---\n\n".join(selected_chunks)
+
+    return prompt_start + context_text + prompt_end
+
+# PROMPT_LIMIT = 3750
+
