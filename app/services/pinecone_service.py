@@ -1,7 +1,8 @@
-import pinecone
+
 from app.services.ollama_service import get_embedding
 import os
 from pinecone import Pinecone, ServerlessSpec
+
 
 
 # PINECONE_API_KEY = os.environ.get('PINECONE_API_KEY')
@@ -14,7 +15,7 @@ pc = Pinecone(
 
 EMBEDDING_DIMENSION = 384
 
-def embed_chunks_to_pinecone(chunks, index_name):
+def embed_chunks_to_pinecone(chunks, index_name,source_url):
     if index_name in pc.list_indexes().names():
         pc.delete_index(name = index_name)
     
@@ -24,13 +25,15 @@ def embed_chunks_to_pinecone(chunks, index_name):
     for i,chunk in enumerate(chunks):
         embedding = get_embedding(chunk)
         embeddings_with_ids.append((str(i),embedding,chunk))
-    upserts = [(id,vec,{"chunk_text":text}) for id,vec,text in embeddings_with_ids]
+    upserts = [(id,vec,{"chunk_text":text,"source":source_url}) for id,vec,text in embeddings_with_ids]
     index.upsert(vectors = upserts)
 
-def get_similar_context_chunks(query, index_name):
+def get_similar_context_chunks(query, index_name,source_url):
     question_embedding = get_embedding(query)
     index = pc.Index(name = index_name)
-    query_results = index.query(vector=question_embedding, top_k=3, include_metadata=True)
+    query_results = index.query(vector=question_embedding, top_k=3, include_metadata=True,filter={"source": source_url})
     context_chunks = [x['metadata']['chunk_text'] for x in query_results['matches']]
     return context_chunks
 
+# Optional: add metadata filtering like source=url if you're storing it
+# query_results = index.query(vector=question_embedding, top_k=3, include_metadata=True)

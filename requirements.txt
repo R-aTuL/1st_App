@@ -5,3 +5,4 @@ ollama
 pinecone-client
 flask-cors
 python-dotenv
+readability-lxml

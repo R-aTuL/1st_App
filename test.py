@@ -1,23 +1,26 @@
 import requests
 
-# url = "http://127.0.0.1:5000/embed-store"
-# headers = {"Content-Type": "application/json"}
-# data = {"url": "https://dev.to/bobur/how-to-build-a-custom-gpt-enabled-full-stack-app-for-real-time-data-38k8"}
+def scrap_url():
+    web_url = input("Enter the website URL: ")
+    embed_url = "http://127.0.0.1:5000/embed-store"
+    headers = {"Content-Type": "application/json"}
+    data = {"url": web_url}
+    
+    response = requests.post(embed_url, json=data, headers=headers)
+    print(response.json())
 
-url = "http://127.0.0.1:5000/handle-query"
-headers = {"Content-Type": "application/json"}
-data = {"question":"Why do we provide ChatGPT with a custom knowledge base?"}
+    # Chat loop
+    while True:
+        query = input("Enter your question (or type 'exit' to quit): ")
+        if query.lower() == 'exit':
+            break
 
-response = requests.post(url, json=data, headers=headers)
-print(response.json())
+        query_url = "http://127.0.0.1:5000/handle-query"
+        data1 = {
+                "question": query,
+                "url":web_url}
+        print(data1)
+        response = requests.post(query_url, json=data1, headers=headers)
+        print(response.json())
 
-
-# import os
-# from dotenv import load_dotenv
-
-# load_dotenv()
-# model_name = os.getenv("OLLAMA_MODEL", "mistral")
-
-# import ollama
-# response = ollama.chat(model=model_name, messages=[{"role": "user", "content": "Test"}])
-# print(response)
+scrap_url()
